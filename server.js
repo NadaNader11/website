@@ -10,10 +10,12 @@ const cors = require('cors');
 const secret_key = 'BhbsfvihobsiofbidhbfidsbfipsN';
 const url = require('url');
 
+
 const db = new sqlite.Database("./booking.db", sqlite.OPEN_READWRITE, (err) => {
     if (err) return console.error(err);
     console.log('Connected to the database.');
 });
+
 
 app.use(bodyparser.json());
 app.use((err, req, res, next) => {
@@ -29,9 +31,11 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
+
 const generateToken = (id, isAdmin) => {
     return jwt.sign({ id, isAdmin }, secret_key, { expiresIn: '1h' });
 };
+
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies.authToken;
@@ -42,6 +46,7 @@ const verifyToken = (req, res, next) => {
         next();
     });
 };
+
 
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'Server is running and cookie-parser is working!' });
@@ -65,6 +70,29 @@ app.post('/user/login', (req, res) => {
                 maxAge: 3600000 
             });
             return res.status(200).json({ id: userID, admin: isAdmin, token });
+        });
+    });
+});
+
+app.post('/user/register', (req, res) => {
+    const name = req.body.name;
+    const email = req.body.email;
+    const password = req.body.password;
+    console.log("name=" + name);
+    console.log("email=" + email);
+    console.log("password=" + password);
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+        if (err) {
+            console.log("error hashing pass");
+            return res.status(500).send('Error hashing password');
+        }
+        db.run(`INSERT INTO USERS (UserName,email,password,isadmin) VALUES (?,?,?,?)`, [name, email, hashedPassword, 0], (err) => {
+            if (err) {
+                console.log("error=" + err);
+                return res.status(401).send(err);
+            } else {
+                return res.status(200).send('Registration successful');
+            }
         });
     });
 });
@@ -124,8 +152,10 @@ app.post('/api/AddDegree', (req, res) => {
     });
 });
 
+
 console.log('App created.');
 app.listen(port, (err) => {
     if (err) return console.error(err);
     console.log(`Server is running on port ${port}`);
 });
+

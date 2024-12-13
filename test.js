@@ -54,17 +54,17 @@ server.post('/user/login', (req, res) => {
     });
 });
 
-server.post('/user/register', (req, res) => {
-    const { name, email, password } = req.body;
+// server.post('/user/register', (req, res) => {
+//     const { name, email, password } = req.body;
 
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
-        if (err) return res.status(500).send('Error hashing password');
+//     bcrypt.hash(password, 10, (err, hashedPassword) => {
+//         if (err) return res.status(500).send('Error hashing password');
 
-        db.run(`INSERT INTO Doctors (NAME, EMAIL, PASSWORD, ISADMIN) VALUES (?, ?, ?, ?)`, [name, email, hashedPassword, 0], (err) => {
-            if (err) return res.status(401).send(err);
-            return res.status(200).send('Registration successful');
-        });
-    });
+//         db.run(`INSERT INTO Doctors (NAME, EMAIL, PASSWORD, ISADMIN) VALUES (?, ?, ?, ?)`, [name, email, hashedPassword, 0], (err) => {
+//             if (err) return res.status(401).send(err);
+//             return res.status(200).send('Registration successful');
+//         });
+//     });
 });
 
 server.post('/appointments/book', verifyToken, (req, res) => {
@@ -141,17 +141,17 @@ server.post('/user/login', (req, res) => {
     });
 });
 
-server.post('/user/register', (req, res) => {
-    const { name, email, password } = req.body;
+// server.post('/user/register', (req, res) => {
+//     const { name, email, password } = req.body;
 
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
-        if (err) return res.status(500).send('Error hashing password');
+//     bcrypt.hash(password, 10, (err, hashedPassword) => {
+//         if (err) return res.status(500).send('Error hashing password');
 
-        db.run(`INSERT INTO Doctors (NAME, EMAIL, PASSWORD, ISADMIN) VALUES (?, ?, ?, ?)`, [name, email, hashedPassword, 0], (err) => {
-            if (err) return res.status(401).send(err);
-            return res.status(200).send('Registration successful');
-        });
-    });
+//         db.run(`INSERT INTO Doctors (NAME, EMAIL, PASSWORD, ISADMIN) VALUES (?, ?, ?, ?)`, [name, email, hashedPassword, 0], (err) => {
+//             if (err) return res.status(401).send(err);
+//             return res.status(200).send('Registration successful');
+//         });
+//     });
 });
 
 server.post('/appointments/book', verifyToken, (req, res) => {
