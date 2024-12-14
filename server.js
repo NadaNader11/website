@@ -1,41 +1,33 @@
 const express = require('express');
 const bodyparser = require('body-parser');
-const app = express();
-const port = 3000;
 const cookieParser = require('cookie-parser');
 const sqlite = require('sqlite3').verbose();
-const jwt = require('jsonwebtoken'); 
-const bcrypt = require('bcrypt'); 
-const cors = require('cors');
-const secret_key = 'BhbsfvihobsiofbidhbfidsbfipsN';
-const url = require('url');
-
-
-const db = new sqlite.Database("./booking.db", sqlite.OPEN_READWRITE, (err) => {
-    if (err) return console.error(err);
-    console.log('Connected to the database.');
-});
-
-
-app.use(bodyparser.json());
-app.use((err, req, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        return res.status(400).send({ error: 'Invalid JSON payload' });
-    }
-    next();
-});
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const cors = require('cors'); 
+const url = require('url'); 
+const app = express();
+const port = 3005;
+const secret_key = process.env.SECRET_KEY || 'BhbsfvihobsiofbidhbfidsbfipsN'; 
 
 app.use(cors({
-    origin: "http://localhost:3000",
-    credentials: true
+    origin: 'http://localhost:3000',
+    credentials: true, 
 }));
+app.use(bodyparser.json());
 app.use(cookieParser());
 
+const db = new sqlite.Database('./booking.db', sqlite.OPEN_READWRITE, (err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err); // Enhanced error logging
+        return;
+    }
+    console.log('Connected to the database.');
+});
 
 const generateToken = (id, isAdmin) => {
     return jwt.sign({ id, isAdmin }, secret_key, { expiresIn: '1h' });
 };
-
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies.authToken;
@@ -47,63 +39,17 @@ const verifyToken = (req, res, next) => {
     });
 };
 
-
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'Server is running and cookie-parser is working!' });
-});
-
-app.post('/user/login', (req, res) => {
-    const { email, password } = req.body;
-    db.get(`SELECT * FROM USER WHERE EMAIL=?`, [email], (err, row) => {
-        if (err || !row) return res.status(401).send('Invalid credentials');
-        bcrypt.compare(password, row.PASSWORD, (err, isMatch) => {
-            if (err) return res.status(500).send('Error comparing password.');
-            if (!isMatch) return res.status(401).send('Invalid credentials');
-            const userID = row.ID;
-            const isAdmin = row.ISADMIN;
-            const token = generateToken(userID, isAdmin);
-
-            res.cookie('authToken', token, {
-                httpOnly: true,
-                sameSite: 'lax', 
-                secure: false, 
-                maxAge: 3600000 
-            });
-            return res.status(200).json({ id: userID, admin: isAdmin, token });
-        });
-    });
-});
-
-app.post('/user/register', (req, res) => {
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
-    console.log("name=" + name);
-    console.log("email=" + email);
-    console.log("password=" + password);
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
-        if (err) {
-            console.log("error hashing pass");
-            return res.status(500).send('Error hashing password');
-        }
-        db.run(`INSERT INTO USERS (UserName,email,password,isadmin) VALUES (?,?,?,?)`, [name, email, hashedPassword, 0], (err) => {
-            if (err) {
-                console.log("error=" + err);
-                return res.status(401).send(err);
-            } else {
-                return res.status(200).send('Registration successful');
-            }
-        });
-    });
-});
-
 app.get('/api/Bookings', (req, res) => {
     let sql = "SELECT * FROM GetBookings";
-    const queryObject = url.parse(req.url, true).query;
-    if (queryObject.field && queryObject.type)
+    const queryObject = req.query;
+    if (queryObject.field && queryObject.type) {
         sql += ` WHERE ${queryObject.field} = ?`;
-    db.all(sql, [queryObject.type], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    }
+    db.all(sql, [queryObject.type], (err, rows) => { // Parameterized query to prevent SQL injection
+        if (err) {
+            console.error("Error fetching bookings:", err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ data: rows });
     });
 });
@@ -111,51 +57,118 @@ app.get('/api/Bookings', (req, res) => {
 app.get('/api/GetSpecialties', (req, res) => {
     const sql = "SELECT * FROM Specialty ORDER BY SpecialtyName";
     db.all(sql, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            console.error("Error fetching specialties:", err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json({ data: rows });
     });
 });
+       
+app.post('/user/login', (req, res) => {
+    const { email, password } = req.body;
+    db.get(`SELECT * FROM USERS WHERE email = ?`, [email], (err, user) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).send('Server error');
+        }
 
-app.post('/api/AddDoctor', (req, res) => {
-    const { DoctorName, email, SpecialtyID, DegreeID, MobileNo } = req.body;
-    if (!DoctorName || !email || !SpecialtyID || !DegreeID || !MobileNo) {
-        return res.status(400).send('Required field is missing');
-    }
-    const sql = `INSERT INTO Doctors (DoctorName, email, SpecialtyID, DegreeID, MobileNo) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sql, [DoctorName, email, SpecialtyID, DegreeID, MobileNo], function (err) {
-        if (err) return res.status(500).send(err.message);
-        res.send('Doctor inserted successfully!');
+        if (!user) {
+            return res.status(401).send('Invalid email or password');
+        }
+
+        bcrypt.compare(password, user.Password, (err, isMatch) => {
+            if (err) {
+                console.error("Password comparison error:", err);
+                return res.status(500).send('Server error');
+            }
+
+            if (!isMatch) {
+                return res.status(401).send('Invalid email or password');
+            }
+
+            const token = generateToken(user.UserID, user.isadmin);
+
+            res.cookie('authToken', token, {
+                httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production', 
+                maxAge: 3600000,
+            });
+
+            return res.status(200).json({ id: user.UserID, admin: user.isadmin });
+        });
     });
 });
 
-app.post('/api/AddSpecialty', (req, res) => {
-    const { SpecialtyName } = req.body;
-    if (!SpecialtyName) {
-        return res.status(400).send('Specialty Name is required');
-    }
-    const sql = `INSERT INTO Specialty (SpecialtyName) VALUES (?)`;
-    db.run(sql, [SpecialtyName], function (err) {
-        if (err) return res.status(500).send(err.message);
-        res.send('Specialty inserted successfully!');
+app.post('/user/register', (req, res) => {
+    const { name, email, password } = req.body;
+    db.get(`SELECT * FROM USERS WHERE email = ?`, [email], (err, user) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).send('Server error');
+        }
+
+        if (user) {
+            return res.status(409).send('User already exists');
+        }
+
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
+            if (err) {
+                console.error("Error hashing password:", err);
+                return res.status(500).send('Error hashing password');
+            }
+
+            db.run(
+                `INSERT INTO USERS (UserName, email, password, isadmin) VALUES (?, ?, ?, ?)`,
+                [name, email, hashedPassword, 0],
+                (err) => {
+                    if (err) {
+                        console.error("Error creating user:", err);
+                        return res.status(500).send('Error creating user');
+                    }
+                    res.status(200).send('Registration successful');
+                }
+            );
+        });
     });
 });
 
-app.post('/api/AddDegree', (req, res) => {
-    const { DegreeName } = req.body;
-    if (!DegreeName) {
-        return res.status(400).send('Degree Name is required');
+app.post('/appointments/book', verifyToken, (req, res) => {
+    const { doctorID, date, time, userID } = req.body;
+    //const userID = req.userDetails.id;
+
+    db.run(`INSERT INTO Booking (USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (?, ?, ?, ?)`, [userID, doctorID, date, time], (err) => {
+        if (err) {
+            console.log("err:" + err);
+            return res.status(500).send(err);
+        }
+        return res.status(200).send('Appointment booked successfully');
+    });
+}); 
+
+app.delete('/user/:id', verifyToken, (req, res) => {
+    const userId = req.params.id;
+
+    if (req.userDetails.id !== parseInt(userId) && !req.userDetails.isAdmin) {
+        return res.status(403).send('Forbidden: You are not authorized to delete this user');
     }
-    const sql = `INSERT INTO Degree (DegreeName) VALUES (?)`;
-    db.run(sql, [DegreeName], function (err) {
-        if (err) return res.status(500).send(err.message);
-        res.send('Degree inserted successfully!');
+
+    db.run(`DELETE FROM USERS WHERE UserID = ?`, [userId], function (err) {
+        if (err) {
+            console.error("Error deleting user:", err);
+            return res.status(500).send('Error deleting user');
+        }
+
+        if (this.changes === 0) {
+            return res.status(404).send('User not found');
+        }
+
+        res.status(200).send(`User with ID ${userId} deleted successfully`);
     });
 });
 
-
-console.log('App created.');
-app.listen(port, (err) => {
-    if (err) return console.error(err);
-    console.log(`Server is running on port ${port}`);
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
 });
-
+ 
