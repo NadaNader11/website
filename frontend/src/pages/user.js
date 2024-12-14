@@ -533,25 +533,25 @@ const User = () => {
 
   const doctors = {
     Dermatology: [
-      { name: "Mohamed Ahmed Mahmoud", email: "m.mahmoud@clinic.com" },
-      { name: "Hazem Ahmed Gamal", email: "h.ahmed@clinic.com" },
+      { name: "Mohamed Ahmed Mahmoud", email: "m.mahmoud@clinic.com",doctorId: "1" },
+      { name: "Hazem Ahmed Gamal", email: "h.ahmed@clinic.com",doctorId: "2" },
     ],
     Cardiologist: [
-      { name: "Tamer Ahmed Mahmoud", email: "t.mahmoud@clinic.com" },
-      { name: "Dina Ahmed Mahmoud", email: "a.ahmed@clinic.com" },
+      { name: "Tamer Ahmed Mahmoud", email: "t.mahmoud@clinic.com",doctorId: "3" },
+      { name: "Dina Ahmed Mahmoud", email: "a.ahmed@clinic.com",doctorId: "4" },
     ],
     "General practitioner": [
-      { name: "Ayman Osama Mohamed", email: "a.osama@clinic.com" },
-      { name: "Samy Aly Karem", email: "s.Aly@clinic.com" },
+      { name: "Ayman Osama Mohamed", email: "a.osama@clinic.com",doctorId: "5" },
+      { name: "Samy Aly Karem", email: "s.Aly@clinic.com" ,doctorId: "6"},
     ],
     "Internal medicine": [
-      { name: "Ahmed Mahmoud", email: "a.mahmoud@clinic.com" },
+      { name: "Ahmed Mahmoud", email: "a.mahmoud@clinic.com",doctorId: "7" },
     ],
     Neurologist: [
-      { name: "Hussein Aly Mahmoud", email: "h.aly@clinic.com" },
+      { name: "Hussein Aly Mahmoud", email: "h.aly@clinic.com",doctorId: "8" },
     ],
     "General surgery": [
-      { name: "Magdy Saif Sherif", email: "m.saif@clinic.com" },
+      { name: "Magdy Saif Sherif", email: "m.saif@clinic.com",doctorId: "9" },
     ],
   };
 
@@ -573,32 +573,35 @@ const User = () => {
     try {
       const response = await fetch("http://localhost:3005/appointments/book", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          
+        },
         body: JSON.stringify({
-        //   USER_ID: formData.USER_ID,
-          DOCTORID: formData.DOCTORID,
+          USER_ID: 1,  
+          DOCTOR_ID: formData.doctorId, 
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          BookingDate: formData.BookingData,
-          BookingTime: formData.BookingTime,
+          BookingDate: formData.date,  
+          BookingTime: formData.time,  
         }),
       });
-
+  
       if (response.ok) {
         setMessage("Booking Successful.");
-        setError("Error Booking");
+        setError(""); // Clear any previous error
       } else {
         const errorText = await response.text();
         setError(`Booking failed: ${errorText}`);
-        setMessage("");
+        setMessage(""); // Clear any success message
       }
     } catch (err) {
       setError("An error occurred during Booking");
-      setMessage("");
+      setMessage(""); // Clear any success message
     }
   };
-
+  
   return (
     <div className="booking-page">
       <header>
@@ -674,7 +677,7 @@ const User = () => {
           >
             <option value="">Select Doctor</option>
             {doctorList.map((doctor, index) => (
-              <option key={index} value={doctor.email}>
+              <option key={index} value={doctor.doctorId}>
                 {doctor.name}
               </option>
             ))}

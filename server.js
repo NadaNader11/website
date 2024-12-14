@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors'); 
 const url = require('url'); 
+const { console } = require('inspector');
 const app = express();
 const port = 3005;
 const secret_key = process.env.SECRET_KEY || 'BhbsfvihobsiofbidhbfidsbfipsN'; 
@@ -31,6 +32,7 @@ const generateToken = (id, isAdmin) => {
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies.authToken;
+    console.log ("token=" + token);
     if (!token) return res.status(401).send('Unauthorized');
     jwt.verify(token, secret_key, (err, details) => {
         if (err) return res.status(403).send('Invalid or expired token');
@@ -134,11 +136,13 @@ app.post('/user/register', (req, res) => {
     });
 });
 
-app.post('/appointments/book', verifyToken, (req, res) => {
-    const { doctorID, date, time, userID } = req.body;
-    //const userID = req.userDetails.id;
-
-    db.run(`INSERT INTO Booking ( USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (? , ?, ?, ?)`, [ userID ,doctorID, date, time], (err) => {
+app.post('/appointments/book', (req, res) => {
+    const { DOCTOR_ID, BookingDate, BookingTime, USER_ID } = req.body;
+    // const userID = req.userDetails.id; 
+    //console.log ("req.userDetails" + req.userDetails.id);
+    //console.log("req.body=" + JSON.stringify(req.body));
+    console.log("doctorid=" + DOCTOR_ID);
+    db.run(`INSERT INTO Booking ( USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (? , ?, ?, ?)`, [ USER_ID ,DOCTOR_ID, BookingDate, BookingTime], (err) => {
         if (err) {
             console.log("err:" + err);
             return res.status(500).send(err);

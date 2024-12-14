@@ -321,7 +321,7 @@ const Home = () => {
         }
     };
 
-    const handleRegister = async (e) => {
+    const handleRegister = async (e) => { 
         e.preventDefault();
         try {
             const response = await fetch('http://localhost:3005/user/register', {
@@ -329,7 +329,7 @@ const Home = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password }),
             });
-            if (response.ok) {
+            if (response.ok) { 
                 setMessage('Registration successful! Please log in.');
             } else {
                 const errorText = await response.text();
@@ -338,7 +338,7 @@ const Home = () => {
         } catch (err) {
             setError('An error occurred during registration');
         }
-    };
+    }; 
 
     return (
         <div className="auth-page">
