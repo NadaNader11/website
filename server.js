@@ -138,7 +138,7 @@ app.post('/appointments/book', verifyToken, (req, res) => {
     const { doctorID, date, time, userID } = req.body;
     //const userID = req.userDetails.id;
 
-    db.run(`INSERT INTO Booking (USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (?, ?, ?, ?)`, [userID, doctorID, date, time], (err) => {
+    db.run(`INSERT INTO Booking ( USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (? , ?, ?, ?)`, [ userID ,doctorID, date, time], (err) => {
         if (err) {
             console.log("err:" + err);
             return res.status(500).send(err);

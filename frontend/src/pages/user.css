@@ -90,12 +90,12 @@
 }
 
 .booking-page {
-    max-width: 10000px; /* Doubled the size from the original */
+    max-width: 7000px; /* Doubled the size from the original */
     margin: 20px auto;
     padding: 20px;
     background: #fff;
     border: 1px solid #ddd;
-    border-radius: 15px;
+    border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     width: 90%; /* Ensure responsiveness */
 }
@@ -118,8 +118,8 @@ header h2 {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 8000px; 
-    margin: 0 auto; 
+    max-width: 800px; /* Control the form width */
+    margin: 0 auto; /* Center the form within the box */
 }
 
 .booking-form label {
