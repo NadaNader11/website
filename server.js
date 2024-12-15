@@ -20,7 +20,7 @@ app.use(cookieParser());
 
 const db = new sqlite.Database('./booking.db', sqlite.OPEN_READWRITE, (err) => {
     if (err) {
-        console.error('Error connecting to the database:', err); // Enhanced error logging
+        console.error('Error connecting to the database:', err); 
         return;
     }
     console.log('Connected to the database.');
@@ -47,7 +47,7 @@ app.get('/api/Bookings', (req, res) => {
     if (queryObject.field && queryObject.type) {
         sql += ` WHERE ${queryObject.field} = ?`;
     }
-    db.all(sql, [queryObject.type], (err, rows) => { // Parameterized query to prevent SQL injection
+    db.all(sql, [queryObject.type], (err, rows) => { 
         if (err) {
             console.error("Error fetching bookings:", err);
             return res.status(500).json({ error: err.message });
@@ -138,9 +138,9 @@ app.post('/user/register', (req, res) => {
 
 app.post('/appointments/book', (req, res) => {
     const { DOCTOR_ID, BookingDate, BookingTime, USER_ID } = req.body;
-    // const userID = req.userDetails.id; 
-    //console.log ("req.userDetails" + req.userDetails.id);
-    //console.log("req.body=" + JSON.stringify(req.body));
+    const userID = req.userDetails.id; 
+    console.log ("req.userDetails" + req.userDetails.id);
+    console.log("req.body=" + JSON.stringify(req.body));
     console.log("doctorid=" + DOCTOR_ID);
     db.run(`INSERT INTO Booking ( USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (? , ?, ?, ?)`, [ USER_ID ,DOCTOR_ID, BookingDate, BookingTime], (err) => {
         if (err) {
