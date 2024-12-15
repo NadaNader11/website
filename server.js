@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors'); 
 const url = require('url'); 
-const { console } = require('inspector');
+// const { console } = require('inspector');
 const app = express();
 const port = 3005;
 const secret_key = process.env.SECRET_KEY || 'BhbsfvihobsiofbidhbfidsbfipsN'; 
@@ -42,12 +42,14 @@ const verifyToken = (req, res, next) => {
 };
 
 app.get('/api/Bookings', (req, res) => {
-    let sql = "SELECT * FROM GetBookings";
-    const queryObject = req.query;
-    if (queryObject.field && queryObject.type) {
-        sql += ` WHERE ${queryObject.field} = ?`;
-    }
-    db.all(sql, [queryObject.type], (err, rows) => { 
+    let sql = "SELECT * FROM GetBookings where BDate=?";
+    const { BookingDate } = req.body;
+    //const queryObject = req.query;
+    //if (queryObject.field && queryObject.type) {
+        //sql += ` WHERE ${queryObject.field} = ?`;
+    //}
+     sql = sql + " LIMIT 100"
+    db.all(sql, [BookingDate], (err, rows) => { 
         if (err) {
             console.error("Error fetching bookings:", err);
             return res.status(500).json({ error: err.message });
@@ -138,8 +140,8 @@ app.post('/user/register', (req, res) => {
 
 app.post('/appointments/book', (req, res) => {
     const { DOCTOR_ID, BookingDate, BookingTime, USER_ID } = req.body;
-    const userID = req.userDetails.id; 
-    console.log ("req.userDetails" + req.userDetails.id);
+    //const userID = req.userDetails.id; 
+    //console.log ("req.userDetails" + req.userDetails.id);
     console.log("req.body=" + JSON.stringify(req.body));
     console.log("doctorid=" + DOCTOR_ID);
     db.run(`INSERT INTO Booking ( USER_ID, DOCTORID, BookingDate, BookingTime) VALUES (? , ?, ?, ?)`, [ USER_ID ,DOCTOR_ID, BookingDate, BookingTime], (err) => {
